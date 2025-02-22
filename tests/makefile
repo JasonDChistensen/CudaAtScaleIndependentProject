@@ -1,5 +1,5 @@
-CXX = g++
-CXXFLAGS = -Wall -g -std=c++17
+COMPILER = nvcc
+COMPILER_FLAGS = -std=c++17
 GTEST_DIR = ../extern/googletest/googletest
 GTEST_INCLUDE = $(GTEST_DIR)/include
 GTEST_LIB = $(GTEST_DIR)/libgtest.a
@@ -13,15 +13,15 @@ all: $(TARGET)
 
 $(GTEST_LIB):
 	@echo "Building Google Test..."
-	$(CXX) $(CXXFLAGS) -I$(GTEST_INCLUDE)  -I$(GTEST_DIR) -c $(GTEST_DIR)/src/gtest-all.cc -o $(GTEST_DIR)/gtest-all.o
+	$(COMPILER) $(COMPILER_FLAGS) -I$(GTEST_INCLUDE)  -I$(GTEST_DIR) -c $(GTEST_DIR)/src/gtest-all.cc -o $(GTEST_DIR)/gtest-all.o
 	ar -rv $(GTEST_LIB) $(GTEST_DIR)/gtest-all.o
 	@echo "Google Test built successfully."
 
 %.o: %.cpp
-	$(CXX) $(CXXFLAGS) -I$(GTEST_INCLUDE) -c $< -o $@
+	$(COMPILER) $(COMPILER_FLAGS) -I$(GTEST_INCLUDE) -c $< -o $@
 
 $(TARGET): $(OBJECTS) $(TEST_OBJECTS) $(GTEST_LIB)
-	$(CXX) $(CXXFLAGS) -I$(GTEST_INCLUDE) $^ -lpthread -o $@
+	$(COMPILER) $(COMPILER_FLAGS) -I$(GTEST_INCLUDE) $^ -o $@
 
 run: $(TARGET)
 	./$(TARGET)
