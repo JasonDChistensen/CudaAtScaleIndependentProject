@@ -7,6 +7,13 @@ TARGET = newProjectTests.exe
 SOURCES = $(wildcard *.cpp)
 OBJECTS = $(SOURCES:.cpp=.o)
 TEST_SOURCES = $(wildcard *_test.cpp)
+TEST_SOURCES = \
+  main.cpp \
+  fileManagement/tests.cpp \
+  ../src/fileManagement/readFile.cpp
+
+INCLUDE = \
+  -I../include/fileManagement/
 TEST_OBJECTS = $(TEST_SOURCES:.cpp=.o)
 
 all: $(TARGET)
@@ -18,10 +25,10 @@ $(GTEST_LIB):
 	@echo "Google Test built successfully."
 
 %.o: %.cpp
-	$(COMPILER) $(COMPILER_FLAGS) -I$(GTEST_INCLUDE) -c $< -o $@
+	$(COMPILER) $(COMPILER_FLAGS) -I$(GTEST_INCLUDE) $(INCLUDE) -c $< -o $@
 
 $(TARGET): $(OBJECTS) $(TEST_OBJECTS) $(GTEST_LIB)
-	$(COMPILER) $(COMPILER_FLAGS) -I$(GTEST_INCLUDE) $^ -o $@
+	$(COMPILER) $(COMPILER_FLAGS) -I$(GTEST_INCLUDE) $(INCLUDE) $^ -o $@
 
 run: $(TARGET)
 	./$(TARGET)

@@ -23,3 +23,10 @@ make
 ```
 newProjectTests.exe
 ```
+
+## Reference:
+
+Setting up Visual Studio for debugging: https://docs.nvidia.com/nsight-visual-studio-code-edition/cuda-debugger/index.html
+
+Preview .md file side-by-side in Visual Studio: (Ctrl+K V)
+
