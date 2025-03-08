@@ -6,15 +6,14 @@ GTEST_LIB = $(GTEST_DIR)/libgtest.a
 TARGET = newProjectTests.exe
 SOURCES = $(wildcard *.cpp)
 SOURCES = \
-  ../src/fileManagement/readFile.cpp \
-  ../src/signalProcessing/upsample.cpp
+  ../src/fileManagement/readFile.cpp 
 
 SOURCES_CU = \
- ../src/kernals.cu
- $(info    SOURCES is $(SOURCES))
+  ../src/signalProcessing/upsample.cu
+ $(info    SOURCES: $(SOURCES))
 
 OBJECTS = $(SOURCES:.cpp=.o) $(SOURCES_CU:.cu=.o)
-$(info    OBJECTS is $(OBJECTS))
+$(info    OBJECTS: $(OBJECTS))
 TEST_SOURCES = $(wildcard *_test.cpp)
 TEST_SOURCES = \
   main.cpp \

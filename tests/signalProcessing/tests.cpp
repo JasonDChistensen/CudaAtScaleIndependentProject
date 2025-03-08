@@ -1,10 +1,8 @@
 #include <gtest/gtest.h>
 #include "readFile.hh"
-#include "upsample.hh"
+#include "upsample.cuh"
 // For the CUDA runtime routines (prefixed with "cuda_")
 #include <cuda_runtime.h>
-
-#include "kernals.cuh"
 
 
 TEST(SIGNAL_PROCESSING, UPSAMPLE)
@@ -19,7 +17,7 @@ TEST(SIGNAL_PROCESSING, UPSAMPLE)
 
 
     size_t upsampleFactor  = 2;
-    float* d_Input = allocateDeviceMemory(h_data.size(), upsampleFactor);
+    float* d_Input = upSample::allocateDeviceMemory(h_data.size(), upsampleFactor);
     EXPECT_NE(d_Input, nullptr);
     printf("d_Input: %p\n", d_Input);
     err = cudaMemcpy(d_Input, h_data.data(), h_data.size()*sizeof(float), cudaMemcpyHostToDevice);
@@ -30,7 +28,7 @@ TEST(SIGNAL_PROCESSING, UPSAMPLE)
       exit(EXIT_FAILURE);
     }
 
-    float* d_Output = allocateDeviceMemory(h_data.size(), upsampleFactor);
+    float* d_Output = upSample::allocateDeviceMemory(h_data.size(), upsampleFactor);
     EXPECT_NE(d_Output, nullptr);
     printf("d_Output: %p\n", d_Output);
 
@@ -60,7 +58,7 @@ TEST(SIGNAL_PROCESSING, UPSAMPLE)
     // int numElements = h_data.size();
     // deviceUpsample<<<blocksPerGrid, threadsPerBlock>>>(d_Output, d_Input, numElements, upsampleFactor);
     int numElements = h_data.size();
-    hostUpsample(d_Output, d_Input, numElements, upsampleFactor);
+    upSample::execute(d_Output, d_Input, numElements, upsampleFactor);
 
 
     err = cudaGetLastError();
@@ -111,7 +109,7 @@ TEST(SIGNAL_PROCESSING, UPSAMPLE)
     for(size_t i = 0; i < h_upsample.size(); i++)
     {
         //EXPECT_FLOAT_EQ(h_data[i], h_results[i]);
-        printf("[%u]: %f\n", i, h_upsample[i]);
+        printf("[%lu]: %f\n", i, h_upsample[i]);
     }
 
 
@@ -119,5 +117,5 @@ TEST(SIGNAL_PROCESSING, UPSAMPLE)
 
 
 
-    cleanupDeviceMemory(d_Input);
+    upSample::cleanupDeviceMemory(d_Input);
 }
