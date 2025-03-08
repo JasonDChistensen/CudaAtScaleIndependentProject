@@ -9,7 +9,8 @@ SOURCES = \
   ../src/fileManagement/readFile.cpp 
 
 SOURCES_CU = \
-  ../src/signalProcessing/upsample.cu
+  ../src/signalProcessing/upsample.cu \
+  ../src/signalProcessing/interpolate.cu
  $(info    SOURCES: $(SOURCES))
 
 OBJECTS = $(SOURCES:.cpp=.o) $(SOURCES_CU:.cu=.o)
@@ -19,10 +20,15 @@ TEST_SOURCES = \
   main.cpp \
   fileManagement/tests.cpp \
   signalProcessing/tests.cpp \
-#  ../src/fileManagement/readFile.cpp \
-#  ../src/signalProcessing/upsample.cpp
 
-
+# Libraries stored here: /usr/lib/x86_64-linux-gnu
+# NPPC, NPP core library which MUST be included when linking any application, functions are listed in nppCore.h,
+#   lnppc
+# NPPIST, statistics and linear transform in nppi_statistics_functions.h and nppi_linear_transforms.h,
+#   lnppist
+# NPPISU, memory support functions in nppi_support_functions.h,
+#   -lnppisu
+COMPILER_FLAGS += -lcuda --std c++17 -lnpps -lnppisu -lnppist -lnppc -Wno-deprecated-gpu-targets
 
 INCLUDE = \
   -I../include/ \
