@@ -28,7 +28,7 @@ TEST_SOURCES = \
 #   lnppist
 # NPPISU, memory support functions in nppi_support_functions.h,
 #   -lnppisu
-COMPILER_FLAGS += -lcuda --std c++17 -lnpps -lnppisu -lnppist -lnppc -Wno-deprecated-gpu-targets
+COMPILER_FLAGS += -lcuda --std c++17 -lnpps -lnppisu -lnppist -lnppc -lcublas -Wno-deprecated-gpu-targets
 
 INCLUDE = \
   -I../include/ \

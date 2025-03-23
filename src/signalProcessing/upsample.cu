@@ -63,8 +63,7 @@ void execute(float *d_Output, const float *d_Input, int numElements, int upsampl
 {
     int threadsPerBlock = 256;
     int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
-    //printf("CUDA kernel launch with %d blocks of %d threads\n", blocksPerGrid, threadsPerBlock);
-    //void deviceUpsample(const float *output, const float *input, int numElements, int upsampleFactor)
+    printf("CUDA kernel launch with %d blocks of %d threads\n", blocksPerGrid, threadsPerBlock);
     deviceUpsample<<<blocksPerGrid, threadsPerBlock>>>(d_Output, d_Input, numElements, upsampleFactor);
 }
 
