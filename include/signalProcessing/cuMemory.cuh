@@ -1,5 +1,41 @@
 
+#ifndef CU_MEMORY_H
+#define CU_MEMORY_H
 
+#define CHECK(call)                                                             \
+{                                                                               \
+    const cudaError_t error = call;                                             \
+    if (error != cudaSuccess)                                                   \
+    {                                                                           \
+        printf("CUDA Error: %s:%d, ", __FILE__, __LINE__);                      \
+        printf("code:%d, reason: %s\n", error, cudaGetErrorString(error));      \
+        exit(1);                                                                \
+    }                                                                           \
+}       
+
+#define CHECK_NPP(call)                                                         \
+{                                                                               \
+    const NppStatus error = call;                                               \
+    if (error != NPP_SUCCESS)                                                   \
+    {                                                                           \
+        printf("NPP Error: %s:%d, ", __FILE__, __LINE__);                       \
+        printf("code:%d\n", error);                                             \
+        exit(1);                                                                \
+    }                                                                           \
+}
+
+#define CHECK_CUBLAS(call)                                                      \
+{                                                                               \
+    const cublasStatus_t error = call;                                          \
+    if (error != CUBLAS_STATUS_SUCCESS)                                         \
+    {                                                                           \
+        printf("cuBLAS Error: %s:%d, ", __FILE__, __LINE__);                    \
+        printf("code:%d\n", error);                                             \
+        exit(1);                                                                \
+    }                                                                           \
+}
+
+ 
 template <typename T>
 class cuMemory
 {
@@ -16,7 +52,7 @@ public:
     }
     cuMemory(size_t nLength): m_length(nLength)
     {
-        printf("cuMemory, constructor, nLength: %lu\n", nLength);
+        //printf("cuMemory, constructor, nLength: %lu\n", nLength);
         cudaError_t err = cudaMalloc((void **)&m_data, nLength*sizeof(T));
         if (err != cudaSuccess) {
             fprintf(stderr, "Failed to allocate device memory (error code %s)!\n",
@@ -27,7 +63,7 @@ public:
     }
     ~cuMemory()
     {
-        printf("cuMemory, desstructor\n");
+        //printf("cuMemory, desstructor\n");
         // Free device global memory
         cudaError_t err = cudaFree(m_data);
         if (err != cudaSuccess) {
@@ -55,3 +91,5 @@ private:
     T *m_data;
     size_t m_length;
 };
+
+#endif // CU_MEMORY_H
