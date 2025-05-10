@@ -45,44 +45,23 @@ TEST(SIGNAL_PROCESSING, DISABLED_NPP_MULTIPLY_EXAMPLE)
 
     // Allocate the memory for Source 1
     float *pSrc1 = NULL;
-    err = cudaMalloc((void **)&pSrc1, nLength*sizeof(Npp32f));
-    if (err != cudaSuccess) {
-        fprintf(stderr, "Failed to allocate device memory for Source 1 (error code %s)!\n",
-        cudaGetErrorString(err));
-        exit(EXIT_FAILURE);
-    }
+    CHECK(cudaMalloc((void **)&pSrc1, nLength*sizeof(Npp32f)));
 
     // Allocate the memory for Source 2
     float *pSrc2 = NULL;
-    err = cudaMalloc((void **)&pSrc2, nLength*sizeof(Npp32f));
-    if (err != cudaSuccess) {
-        fprintf(stderr, "Failed to allocate device memory for Source 2 (error code %s)!\n",
-        cudaGetErrorString(err));
-        exit(EXIT_FAILURE);
-    }
+    CHECK(cudaMalloc((void **)&pSrc2, nLength*sizeof(Npp32f)));
 
     // Allocate the memory for Destination
     float *pDst = NULL;
-    err = cudaMalloc((void **)&pDst, nLength*sizeof(Npp32f));
-    if (err != cudaSuccess) {
-        fprintf(stderr, "Failed to allocate device memory for Destination (error code %s)!\n",
-        cudaGetErrorString(err));
-        exit(EXIT_FAILURE);
-    }
+    CHECK(cudaMalloc((void **)&pDst, nLength*sizeof(Npp32f)));
 
-    NppStatus status = nppsSet_32f(2.0, pSrc1, nLength);
-    status = nppsSet_32f(3.0, pSrc2, nLength);
-    status = nppsMul_32f(pSrc1, pSrc2, pDst, nLength);
+    CHECK_NPP(nppsSet_32f(2.0, pSrc1, nLength));
+    CHECK_NPP(nppsSet_32f(3.0, pSrc2, nLength));
+    CHECK_NPP(nppsMul_32f(pSrc1, pSrc2, pDst, nLength));
 
 
     std::vector<Npp32f> h_result(nLength);
-    err = cudaMemcpy(h_result.data(), pDst, h_result.size()*sizeof(Npp32f), cudaMemcpyDeviceToHost);
-    if (err != cudaSuccess) {
-        fprintf(stderr,
-        "Failed to copy d_Output vector from device to host (error code %s)!\n",
-        cudaGetErrorString(err));
-        exit(EXIT_FAILURE);
-    }
+    CHECK(cudaMemcpy(h_result.data(), pDst, h_result.size()*sizeof(Npp32f), cudaMemcpyDeviceToHost));
 
     for(size_t i = 0; i < 30; i++)
     {
@@ -104,9 +83,9 @@ TEST_F(cuBlasTestFixture, CUBLAS_DOT_PRODUCT)
     const Npp32f SRC2_INIT = 2.0;
     const Npp32f EXECTED_OUTPUT = SRC1_INIT*SRC2_INIT*nLength;
 
-    NppStatus status = nppsSet_32f(SRC1_INIT, src1.get_ptr(), src1.get_length());
-    status = nppsSet_32f(SRC2_INIT, src2.get_ptr(), src2.get_length());
-    cublasStatus_t stat = cublasSdot (fixture_handle, src1.get_length(), src1.get_ptr(), 1, src2.get_ptr(), 1, dst.get_ptr());
+    CHECK_NPP(nppsSet_32f(SRC1_INIT, src1.data(), src1.size()));
+    CHECK_NPP(nppsSet_32f(SRC2_INIT, src2.data(), src2.size()));
+    CHECK_CUBLAS(cublasSdot (fixture_handle, src1.size(), src1.data(), 1, src2.data(), 1, dst.data()));
 
     EXPECT_EQ(dst.get_data().front(), EXECTED_OUTPUT);
     //printf("dst result: %f\n", dst.get_data().front());
@@ -115,52 +94,40 @@ TEST_F(cuBlasTestFixture, CUBLAS_DOT_PRODUCT)
 TEST(SIGNAL_PROCESSING, CU_MEMORY)
 {
     cuMemory<float> src0(0);        
-    EXPECT_EQ(src0.get_ptr(), nullptr);
-    EXPECT_EQ(src0.get_length(), 0);
+    EXPECT_EQ(src0.data(), nullptr);
+    EXPECT_EQ(src0.size(), 0);
 
     cuMemory<float> src1(1);   
-    EXPECT_NE(src1.get_ptr(), nullptr);
-    EXPECT_EQ(src1.get_length(), 1);
+    EXPECT_NE(src1.data(), nullptr);
+    EXPECT_EQ(src1.size(), 1);
 
     cuMemory<float> src100(100);   
-    EXPECT_NE(src100.get_ptr(), nullptr);
-    EXPECT_EQ(src100.get_length(), 100);
+    EXPECT_NE(src100.data(), nullptr);
+    EXPECT_EQ(src100.size(), 100);
 }
 
 
 
 TEST(SIGNAL_PROCESSING, UPSAMPLE)
 {
-    // Error code to check return values for CUDA calls
-    cudaError_t err = cudaSuccess;
-
-    printf("Read file\n");
-    std::vector<float> h_data = readFile("./vectors/inputSignal2.bin");
-    ASSERT_NE(h_data.size(), 0u);
-    printf("h_data.size: %lu\n", h_data.size());
+    std::vector<float> h_Input = readFile("./vectors/inputSignal2.bin");
+    ASSERT_NE(h_Input.size(), 0u);
+    printf("h_Input.size: %lu\n", h_Input.size());
 
 
-    size_t upsampleFactor  = 2;
-    float* d_Input = upSample::allocateDeviceMemory(h_data.size(), upsampleFactor);
+    const size_t upsampleFactor  = 2;
+    float* d_Input = upSample::allocateDeviceMemory(h_Input.size(), upsampleFactor);
     ASSERT_NE(d_Input, nullptr);
     printf("d_Input: %p\n", d_Input);
-    err = cudaMemcpy(d_Input, h_data.data(), h_data.size()*sizeof(float), cudaMemcpyHostToDevice);
-    if (err != cudaSuccess) {
-    fprintf(stderr,
-            "Failed to copy vector from host to device (error code %s)!\n",
-            cudaGetErrorString(err));
-      exit(EXIT_FAILURE);
-    }
+    CHECK(cudaMemcpy(d_Input, h_Input.data(), h_Input.size()*sizeof(float), cudaMemcpyHostToDevice));
 
-    float* d_Output = upSample::allocateDeviceMemory(h_data.size(), upsampleFactor);
+    float* d_Output = upSample::allocateDeviceMemory(h_Input.size(), upsampleFactor);
     ASSERT_NE(d_Output, nullptr);
     printf("d_Output: %p\n", d_Output);
 
-
-
-    int numElements = h_data.size();
+    int numElements = h_Input.size();
     upSample::execute(d_Output, d_Input, numElements, upsampleFactor);
-    err = cudaGetLastError();
+    cudaError_t err = cudaGetLastError();
     if (err != cudaSuccess) {
         fprintf(stderr, "Failed to launch vectorAdd kernel (error code %s)!\n",
             cudaGetErrorString(err));
@@ -168,134 +135,85 @@ TEST(SIGNAL_PROCESSING, UPSAMPLE)
     }
 
 
-    // // Copy the device result vector in device memory to the host result vector
-    // // in host memory.
-    // printf("Copy output data from the CUDA device to the host memory\n");
-    // std::vector<float> h_results(h_data.size());
-
-    // err = cudaMemcpy(h_results.data(), d_Output, h_data.size()*sizeof(float), cudaMemcpyDeviceToHost);
-    // if (err != cudaSuccess) {
-    //     fprintf(stderr,
-    //         "Failed to copy vector C from device to host (error code %s)!\n",
-    //         cudaGetErrorString(err));
-    //     exit(EXIT_FAILURE);
-    // }
-    // ASSERT_EQ(h_data.size(), h_results.size());
-
-    // for(size_t i = 0; i < h_data.size(); i++)
-    // {
-    //     EXPECT_FLOAT_EQ(h_data[i], h_results[i]);
-    // }
-
-
-    printf("Read file\n");
-    std::vector<float> h_upsampleExpected = readFile("./vectors/inputSignalUpsampled2.bin");
-    ASSERT_NE(h_upsampleExpected.size(), 0u);
-    printf("h_upsampleExpected.size: %lu\n", h_upsampleExpected.size());
-
-
-
+    std::vector<float> h_Expected_Output = readFile("./vectors/inputSignalUpsampled2.bin");
+    ASSERT_NE(h_Expected_Output.size(), 0u);
+    printf("h_Expected_Output.size: %lu\n", h_Expected_Output.size());
 
 
     // Copy the device result vector in device memory to the host result vector
     // in host memory.
     printf("Copy output data from the CUDA device to the host memory\n");
-    std::vector<float> h_upsampleResults(h_data.size()*upsampleFactor);
+    std::vector<float> h_Output(h_Input.size()*upsampleFactor);
 
-    err = cudaMemcpy(h_upsampleResults.data(), d_Output, h_upsampleResults.size()*sizeof(float), cudaMemcpyDeviceToHost);
-    if (err != cudaSuccess) {
-        fprintf(stderr,
-            "Failed to copy d_Output vector from device to host (error code %s)!\n",
-            cudaGetErrorString(err));
-        exit(EXIT_FAILURE);
-    }
-    ASSERT_EQ(h_data.size()*upsampleFactor, h_upsampleResults.size());
-    ASSERT_EQ(h_upsampleExpected.size(), h_upsampleResults.size());
+    CHECK(cudaMemcpy(h_Output.data(), d_Output, h_Output.size()*sizeof(float), cudaMemcpyDeviceToHost));
+    ASSERT_EQ(h_Input.size()*upsampleFactor, h_Output.size());
+    ASSERT_EQ(h_Expected_Output.size(), h_Output.size());
 
     
-    for(size_t i = 0; i < h_upsampleResults.size(); i++)
+    for(size_t i = 0; i < h_Output.size(); i++)
     {
-        // printf("h_upsampleResults[%lu]: %f, h_upsampleExpected[%lu]: %f\n", 
-        //     i, h_upsampleResults[i],
-        //     i, h_upsampleExpected[i]);
-        ASSERT_FLOAT_EQ(h_upsampleResults[i], h_upsampleExpected[i]);
-        //EXPECT_NEAR(h_upsampleResults[i], h_upsampleExpected[i], 1e-6);
-        
+        // printf("h_Output[%lu]: %f, h_Expected_Output[%lu]: %f\n",
+        //     i, h_Output[i],i, h_Expected_Output[i]);
+        ASSERT_FLOAT_EQ(h_Output[i], h_Expected_Output[i]);      
     }
 
     upSample::cleanupDeviceMemory(d_Input);
+}
 
+TEST(SIGNAL_PROCESSING, INTERPOLATE)
+{
+    std::vector<float> h_Input = readFile("./vectors/inputSignal2.bin");
+    ASSERT_NE(h_Input.size(), 0u);
+    printf("h_Input.size: %lu\n", h_Input.size());
 
-
-
-
-
-
+    std::vector<float> h_filter = readFile("./vectors/interpFilter2.bin");
+    ASSERT_NE(h_filter.size(), 0u);
+    printf("h_filter.size: %lu\n", h_filter.size());
+    for(size_t i = 0; i < h_filter.size(); i++)
     {
-        printf("Read the Filter file\n");
-        std::vector<float> h_filter = readFile("./vectors/interpFilter2.bin");
-        ASSERT_NE(h_filter.size(), 0u);
-        printf("h_filter.size: %lu\n", h_filter.size());
-        for(size_t i = 0; i < h_filter.size(); i++)
-        {
-            printf("h_filter[%lu]: %f\n", i, h_filter[i]);
-        }
+        printf("h_filter[%lu]: %f\n", i, h_filter[i]);
+    }
+    cuMemory<float> d_Filter(h_filter);
+    cuMemory<float> d_Aux_Buffer(h_filter.size());
 
-        printf("Read the Upsampled results file\n");
-        std::vector<float> h_matlabInterpolatedOutput = readFile("./vectors/matlabInterpolatedOutput2.bin");
-        ASSERT_NE(h_matlabInterpolatedOutput.size(), 0u);
-        printf("h_matlabInterpolatedOutput.size: %lu\n", h_matlabInterpolatedOutput.size());
+    const size_t upsampleFactor  = 2;
+    const size_t numberOfOutputElements = h_Input.size()*upsampleFactor + ((d_Filter.size()-1)*2);
+    cuMemory<float> d_Output(numberOfOutputElements);
 
 
-        auto[d_Output, d_Input, d_Filter] = interpolate::allocateDeviceMemory(h_data.size(), upsampleFactor, h_filter.size());
+    printf("Read the Upsampled results file\n");
+    std::vector<float> h_matlabInterpolatedOutput = readFile("./vectors/matlabInterpolatedOutput2.bin");
+    ASSERT_NE(h_matlabInterpolatedOutput.size(), 0u);
+    printf("h_matlabInterpolatedOutput.size: %lu\n", h_matlabInterpolatedOutput.size());
 
 
-        err = cudaMemcpy(d_Filter, h_filter.data(), h_filter.size()*sizeof(float), cudaMemcpyHostToDevice);
-        if (err != cudaSuccess) {
-            fprintf(stderr,
-                "Failed to copy h_filter vector from d_Filter (error code %s)!\n",
-                cudaGetErrorString(err));
-            exit(EXIT_FAILURE);
-        }
+    cuMemory<float> d_Input(numberOfOutputElements);
+    CHECK(cudaMemcpy(d_Input.data(), h_Input.data(), h_Input.size()*sizeof(float), cudaMemcpyHostToDevice));
 
-        err = cudaMemcpy(d_Input, h_data.data(), h_data.size()*sizeof(float), cudaMemcpyHostToDevice);
-        if (err != cudaSuccess) {
-            fprintf(stderr,
-                "Failed to copy h_data vector from d_Input (error code %s)!\n",
-                cudaGetErrorString(err));
-            exit(EXIT_FAILURE);
-        }
-
-        //std::vector<float> h_output(h_data.size()*upsampleFactor + (h_filter.size() -1)*2);
-        std::vector<float> h_output(h_data.size()*upsampleFactor);
-        printf("h_output.size: %lu\n", h_output.size());
-        interpolate::execute(h_output.data(), d_Output, d_Input, h_data.size(), upsampleFactor, d_Filter, h_filter.size());
-
-        // std::vector<float> h_output(h_data.size()*upsampleFactor);
-        // err = cudaMemcpy(h_output.data(), d_Output, h_output.size()*sizeof(float), cudaMemcpyDeviceToHost);
-        // if (err != cudaSuccess) {
-        //     fprintf(stderr,
-        //     "Failed to copy d_Output vector from device to host (error code %s)!\n",
-        //     cudaGetErrorString(err));
-        //     exit(EXIT_FAILURE);
-        // }
-
-        for(size_t i = 0; i < 30; i++)
-        {
-            printf("h_output[%lu]: %f, h_matlabInterpolatedOutput[%lu]: %f\n", i, h_output[i], i, h_matlabInterpolatedOutput[i]);
-        }
-
-        ASSERT_EQ(h_matlabInterpolatedOutput.size(), h_output.size());
-
-        for(size_t i = 0; i < h_matlabInterpolatedOutput.size(); i++)
-        {
-            printf("h_output[%lu]: %f\n", i, h_output[i]);
-            ASSERT_NEAR(h_matlabInterpolatedOutput[i], h_output[i], 1e-6);
-        }
+    std::vector<float> h_Output(h_Input.size()*upsampleFactor);
+    printf("h_Output.size: %lu\n", h_Output.size());
+    interpolate::execute(h_Output.data(), d_Output.data(), d_Input.data(), h_Input.size(), upsampleFactor, 
+                         d_Filter.data(), h_filter.size(),d_Aux_Buffer.data());
 
 
-        interpolate::cleanupDeviceMemory(d_Output, d_Input, d_Filter);
+    // std::vector<float> h_Output(h_Input.size()*upsampleFactor);
+    // err = cudaMemcpy(h_Output.data(), d_Output, h_Output.size()*sizeof(float), cudaMemcpyDeviceToHost);
+    // if (err != cudaSuccess) {
+    //     fprintf(stderr,
+    //     "Failed to copy d_Output vector from device to host (error code %s)!\n",
+    //     cudaGetErrorString(err));
+    //     exit(EXIT_FAILURE);
+    // }
+
+    for(size_t i = 0; i < 30; i++)
+    {
+        printf("h_Output[%lu]: %f, h_matlabInterpolatedOutput[%lu]: %f\n", i, h_Output[i], i, h_matlabInterpolatedOutput[i]);
     }
 
-
-}
+    ASSERT_EQ(h_matlabInterpolatedOutput.size(), h_Output.size());
+    for(size_t i = 0; i < h_matlabInterpolatedOutput.size(); i++)
+    {
+        //printf("h_Output[%lu]: %f\n", i, h_Output[i]);
+        ASSERT_NEAR(h_matlabInterpolatedOutput[i], h_Output[i], 1e-6);
+    }
+ }

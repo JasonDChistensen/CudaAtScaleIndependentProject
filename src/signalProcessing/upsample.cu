@@ -4,7 +4,7 @@
 
 namespace upSample {
 
-void execute(float *d_Output, const float *d_Input, int numElements, int upsampleFactor);
+void execute(float *d_Output, float const *d_Input, int numElements, int upsampleFactor);
 
 float * allocateDeviceMemory(size_t numberOfSamples, size_t upsampleFactor)
 {
@@ -43,7 +43,7 @@ void cleanupDeviceMemory(float * d_U)
  * Computes the vector addition of A and B into C. The 3 vectors have the same
  * number of elements numElements.
  */
-__global__ void deviceUpsample(float *output, const float *input, int numElements, int upsampleFactor)
+__global__ void deviceUpsample(float *output, float const *input, int numElements, int upsampleFactor)
 {
     int i = blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -59,7 +59,7 @@ __global__ void deviceUpsample(float *output, const float *input, int numElement
    }
 }
 
-void execute(float *d_Output, const float *d_Input, int numElements, int upsampleFactor)
+void execute(float *d_Output, float const *d_Input, int numElements, int upsampleFactor)
 {
     int threadsPerBlock = 256;
     int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
