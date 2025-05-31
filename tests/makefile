@@ -11,7 +11,8 @@ SOURCES = \
 SOURCES_CU = \
   ../src/signalProcessing/upsample.cu \
   ../src/signalProcessing/interpolate.cu
- $(info    SOURCES: $(SOURCES))
+$(info    SOURCES: $(SOURCES))
+$(info    SOURCES_CU: $(SSOURCES_CU))
 
 OBJECTS = $(SOURCES:.cpp=.o) $(SOURCES_CU:.cu=.o)
 $(info    OBJECTS: $(OBJECTS))

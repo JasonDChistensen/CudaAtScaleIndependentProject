@@ -1,77 +1,147 @@
-#include "example.hpp"
-
 #include <npp.h>
 #include <vector>
 #include <time.h>
 #include <numeric>
 #include <limits>
+//#include <cstdio>  //for printf
+#include <iostream> //for cout
+#include <string>
+#include <set>
+#include <map>
+#include "readFile.hh"
+#include "cuMemory.cuh"
+#include "interpolate.cuh"
 
 using namespace std;
+#define INTERPOLATION_FACTOR int32_t
+#define FILTER_FILE_NAME std::string
 
-int main(int argc, char* argv[]) {
-  printf("nppGetGpuNumSMs: %d\n", nppGetGpuNumSMs());
-  printf("nppGetMaxThreadsPerBlock: %d\n", nppGetMaxThreadsPerBlock());
-  printf("nppGetMaxThreadsPerSM: %d\n", nppGetMaxThreadsPerSM());
-  printf("nppGetGpuName: %s\n", nppGetGpuName());
+static const std::set<int32_t> valid_interpolation_factors = { 2, 3, 5, 7};
+static const std::map<INTERPOLATION_FACTOR, FILTER_FILE_NAME> interpolation_factor_to_file_name = 
+{
+  { 2, "./tests/vectors/interpFilter2.bin"},
+  { 3, "./tests/vectors/interpFilter3.bin"},
+  { 5, "./tests/vectors/interpFilter5.bin"},
+  { 7, "./tests/vectors/interpFilter7.bin"}
+};
 
+void print_help_message(void)
+{
+  cout << "This application will perform interpolation on the input file provided."  << endl;
+  cout << "The input file shoud be an array of floats.  The output will be an array of floats" << endl;
+  cout << "The supported interpolation factors are 2, 3, 5, and 7." << endl;
+  cout << "Usage: cudaAtScaleIndependentProject.exe <output file> <input file> <interpolation factor>" << endl;
+}
 
-
-  float elapsedTime;
-
-  // pSrc, pSum, pDeviceBuffer are all device pointers. 
-  Npp32f * pSrc; 
-  Npp32f * pSum; 
-  Npp8u * pDeviceBuffer;
-  size_t nLength = 17e6;
-
-  // Allocate the device memory.
-  cudaMalloc((void **)(&pSrc), sizeof(Npp32f) * nLength);
-  nppsSet_32f(1.0f, pSrc, nLength);  
-  cudaMalloc((void **)(&pSum), sizeof(Npp32f) * 1);
-
-  // Compute the appropriate size of the scratch-memory buffer, note that nBufferSize and nLength data types have changed from int to size_t. 
-  int nBufferSize;
-  nppsSumGetBufferSize_32f(nLength, &nBufferSize);
-  // Allocate the scratch buffer 
-  cudaMalloc((void **)(&pDeviceBuffer), nBufferSize);
-
-  // Call the primitive with the scratch buffer
-  clock_t start = clock();
-  nppsSum_32f(pSrc, nLength, pSum, pDeviceBuffer);
-  cudaDeviceSynchronize();
-  elapsedTime = ((double) clock() - start) / CLOCKS_PER_SEC;
-  Npp32f nSumHost;
-  cudaMemcpy(&nSumHost, pSum, sizeof(Npp32f) * 1, cudaMemcpyDeviceToHost);
-  printf("GPU time elapsed: %f seconds \n", elapsedTime);
-  printf("sum = %f\n", nSumHost); // nSumHost = 1024.0f;
-
-  // Free the device memory
-  cudaFree(pSrc);
-  cudaFree(pDeviceBuffer);
-  cudaFree(pSum);
-
-  {
-    vector<Npp32f> vectSignal(nLength, 1);
-    clock_t start = clock();
-    Npp32f sum = 0;
-    for(auto v : vectSignal)
-    {
-      sum += v; 
-      if(sum >16777214)
-      {
-          sum = sum + 0.0;
-      }
-    }
-    //sum = std::accumulate(vectSignal.begin(), vectSignal.end(), 0);
-    elapsedTime = ((double) clock() - start) / CLOCKS_PER_SEC;
-    printf("vectSignal.size: %lu\n", vectSignal.size());
-    printf("max value for Npp32f: %f\n", std::numeric_limits<Npp32f>::max());
-    printf("CPU time elapsed: %f seconds \n", elapsedTime);
-    printf("sum = %f\n", sum); // nSumHost = 1024.0f;
-
+bool string_to_int(int32_t& out, char * in)
+{
+  bool status = false;
+  try {
+    out = std::stoi(in);
+    status = true;
+  } catch (const std::invalid_argument& e) {
+    std::cerr << "Error: Invalid argument - Not a valid integer format." << std::endl;
+  } catch (const std::out_of_range& e) {
+    std::cerr << "Error: Out of range - Number is too large or too small." << std::endl;
+  } catch (const std::exception& e) {
+    std::cerr << "Error: An unexpected exception occurred: " << e.what() << std::endl;
   }
+  return status;
+}
+
+int main(int argc, char* argv[])
+{
+
+  if(argc != 4)
+  {
+    print_help_message();
+    return -1;
+  }
+  std::string input_file;
+  std::string output_file;
+  int32_t interpolation_factor;
+
+  for (int i = 1; i < argc; ++i) 
+  {
+    std::string arg = argv[i];
+
+    switch(i)
+    {
+      case 1:
+        output_file = argv[i];
+        break;
+      case 2:
+        input_file = argv[i];
+        break;
+      case 3:
+        if(!string_to_int(interpolation_factor, argv[i]))
+        {
+          print_help_message();
+          return -1;
+        }
+        if(valid_interpolation_factors.count(interpolation_factor) == 0)
+        {
+          cout << "interpolation factor " << interpolation_factor <<  " is not supported." << std::endl;
+          print_help_message();
+          return -1;
+        }
+        break;
+      default:
+        print_help_message();
+        return -1;
+    }
+  }
+  
+  printf("output file:%s\n", output_file.c_str());
+  printf("input file:%s\n", input_file.c_str());
+  printf("interpolation factor:%d\n", interpolation_factor);
 
 
+  /* Get the interpolation filter file name */
+  std::string filter_file;
+  if(interpolation_factor_to_file_name.count(interpolation_factor) > 0)
+  {
+    filter_file = interpolation_factor_to_file_name.at(interpolation_factor);
+  }
+  else
+  {
+    printf("Uh oh! Someting went wrong.  Not able to fine interpolation "
+           "filter file for interpolation factor:%d!\n", interpolation_factor);
+    return -1;
+  }
+  printf("interpolatin filter file name:%s\n", filter_file.c_str());
+  
+  /* Read in the interpolation filter coeff's */
+  std::vector<float> h_filter = readFile(filter_file);
+
+  /* Read in the file to be interpolated*/
+  // example: ./cudaAtScaleIndependentProject.exe  ./output2.bin ./tests/vectors/inputSignal2.bin 2
+  std::vector<float> h_Input = readFile(input_file);
+
+  // Allocate memory
+  cuMemory<float> d_Filter(h_filter);
+  cuMemory<float> d_Aux_Buffer(h_filter.size());
+
+  const size_t upsampleFactor  = interpolation_factor;
+  const size_t numberOfOutputElements = h_Input.size()*upsampleFactor + ((d_Filter.size()-1)*2);
+  printf("h_Input.size():%zu\n", h_Input.size());
+  printf("upsampleFactor:%zu\n", upsampleFactor);
+  printf("numberOfOutputElements:%zu\n", numberOfOutputElements);
+  cuMemory<float> d_Output(numberOfOutputElements);
+
+  // cuMemory<float> d_Input(numberOfOutputElements);
+  // CHECK(cudaMemcpy(d_Input.data(), h_Input.data(), h_Input.size()*sizeof(float), cudaMemcpyHostToDevice));
+
+  // std::vector<float> h_Output(h_Input.size()*upsampleFactor);
+  // printf("h_Output.size: %lu\n", h_Output.size());
+  // interpolate::execute(h_Output.data(), d_Output.data(), d_Input.data(), h_Input.size(), upsampleFactor, 
+  //                      d_Filter.data(), h_filter.size(),d_Aux_Buffer.data());
+
+  // printf("Read the Upsampled results file\n");
+  // std::vector<float> h_matlabInterpolatedOutput = readFile("./vectors/matlabInterpolatedOutput2.bin");
+  // printf("h_matlabInterpolatedOutput.size: %lu\n", h_matlabInterpolatedOutput.size());
+                     
+  
 
   return 0;
 }

@@ -10,7 +10,11 @@ std::vector<float> readFile(std::string fileName)
 
   // Open the file
   pFile = fopen ( fileName.c_str() , "rb" );
-  if (pFile==NULL) {fputs ("File error",stderr); exit (1);}
+  if (pFile==NULL)
+  {
+    printf("Error opening file:%s\n", fileName.c_str());
+    exit (1);
+  }
 
   // obtain file size:
   fseek (pFile , 0 , SEEK_END);
