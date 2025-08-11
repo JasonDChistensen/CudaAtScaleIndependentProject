@@ -8,7 +8,9 @@
 #include <string>
 #include <set>
 #include <map>
+#include <cmath> // Required for std::fabs and std::abs
 #include "readFile.hh"
+#include "writeFile.hh"
 #include "cuMemory.cuh"
 #include "interpolate.cuh"
 
@@ -137,9 +139,35 @@ int main(int argc, char* argv[])
   interpolate::execute(h_Output.data(), d_Output.data(), d_Input.data(), h_Input.size(), upsampleFactor, 
                        d_Filter.data(), h_filter.size(), d_Aux_Buffer.data());
 
-  // printf("Read the Upsampled results file\n");
-  // std::vector<float> h_matlabInterpolatedOutput = readFile("./vectors/matlabInterpolatedOutput2.bin");
-  // printf("h_matlabInterpolatedOutput.size: %lu\n", h_matlabInterpolatedOutput.size());
+  writeFile(output_file, h_Output);
+
+  printf("Read the Upsampled results file\n");
+  std::vector<float> h_matlabInterpolatedOutput = readFile("./tests/vectors/matlabInterpolatedOutput2.bin");
+  printf("h_matlabInterpolatedOutput.size: %lu\n", h_matlabInterpolatedOutput.size());
+
+  std::vector<float> output = readFile(output_file);
+
+  if(h_matlabInterpolatedOutput.size() != output.size())
+  {
+    printf("[%s:%d]Error", __FILE__, __LINE__);
+    exit(1);
+  }
+
+  printf("[%s:%d]output.size:%zu\n", __FILE__, __LINE__, output.size());
+
+  for(size_t i = 0; i < h_matlabInterpolatedOutput.size(); i++)
+  {
+    float error = std::fabs(h_matlabInterpolatedOutput[i] - output[i]);
+    if(error > 1e-5)
+    {
+      printf("[%s:%d]Error!, i:%zu,h_matlabInterpolatedOutput:%.12f, output:%.12f\n", __FILE__, __LINE__,
+        i,
+        h_matlabInterpolatedOutput[i],
+        output[i]
+      );
+      exit(1);
+    }
+  }
                      
   
 
