@@ -1,9 +1,4 @@
 COMPILER=nvcc
-INCLUDE = \
-  -I/usr/local/cuda/include \
-  -I./include \
-  -I./include/fileManagement/ \
-  -I./include/signalProcessing
 
 # Libraries stored here: /usr/lib/x86_64-linux-gnu
 # NPPC, NPP core library which MUST be included when linking any application, functions are listed in nppCore.h,
@@ -12,15 +7,21 @@ INCLUDE = \
 #   lnppist
 # NPPISU, memory support functions in nppi_support_functions.h,
 #   -lnppisu
-
-COMPILER_FLAGS= -lcuda --std c++17 -lnpps -lnppisu -lnppist -lnppc -Wno-deprecated-gpu-targets
+COMPILER_FLAGS= -lcuda --std c++17 -lnpps -lnppisu -lnppist -lnppc -lcublas -Wno-deprecated-gpu-targets
 TARGET = cudaAtScaleIndependentProject.exe
 SOURCES = $(wildcard ./src/*.cpp)
 SOURCES += $(wildcard ./src/fileManagement/*.cpp)
-SOURCES += $(wildcard ./src/signalProcessing/*.cpp)
-OBJECTS = $(SOURCES:.cpp=.o)
+SOURCES_CU = $(wildcard ./src/signalProcessing/*.cu)
+OBJECTS = $(SOURCES:.cpp=.o) $(SOURCES_CU:.cu=.o)
 
-$(SOURCES VAR is $(SOURCES ))
+$(info    SOURCES:    $(SOURCES))
+$(info    SOURCES_CU: $(SOURCES_CU))
+$(info    OBJECTS:    $(OBJECTS))
+
+INCLUDE = \
+  -I./include/ \
+  -I./include/fileManagement/ \
+  -I./include/signalProcessing/
 
 # Debug build flags
 ifeq ($(dbg),1)
@@ -28,16 +29,27 @@ ifeq ($(dbg),1)
     COMPILER_FLAGS += -g -G
 endif
 
-.PHONY: clean build run
+all: $(TARGET)
+
+%.o: %.cpp
+	@echo "Building C++ objects..."
+	$(COMPILER) $(COMPILER_FLAGS) $(INCLUDE) -c $< -o $@
+
+%.o: %.cu
+	@echo "Building CUDA objects..."
+	$(COMPILER) $(COMPILER_FLAGS) $(INCLUDE) -c $< -o $@
 
 build: $(SOURCE)
 	$(COMPILER) $(COMPILER_FLAGS) -I$(INCLUDE) -o $(TARGET) $(SOURCES)
 
 
+$(TARGET): $(OBJECTS)
+	@echo "Building target..."
+	$(COMPILER) $(COMPILER_FLAGS) $(INCLUDE) $^ -o $@
+
+run: $(TARGET)
+	./$(TARGET)
+
 clean:
 	rm -f $(TARGET) $(OBJECTS)
 
-run:
-	./$(TARGET)
-
-all: clean build run

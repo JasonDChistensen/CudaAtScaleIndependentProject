@@ -7,20 +7,20 @@ TARGET = newProjectTests.exe
 SOURCES = $(wildcard *.cpp)
 SOURCES = \
   ../src/fileManagement/readFile.cpp 
-
-SOURCES_CU = \
-  ../src/signalProcessing/upsample.cu \
-  ../src/signalProcessing/interpolate.cu
-$(info    SOURCES: $(SOURCES))
-$(info    SOURCES_CU: $(SSOURCES_CU))
-
+SOURCES_CU = $(wildcard ../src/signalProcessing/*.cu)
 OBJECTS = $(SOURCES:.cpp=.o) $(SOURCES_CU:.cu=.o)
-$(info    OBJECTS: $(OBJECTS))
+
 TEST_SOURCES = $(wildcard *_test.cpp)
 TEST_SOURCES = \
   main.cpp \
   fileManagement/tests.cpp \
   signalProcessing/tests.cpp \
+
+$(info    SOURCES:      $(SOURCES))
+$(info    TEST_SOURCES: $(TEST_SOURCES))
+$(info    SOURCES_CU:   $(SOURCES_CU))
+$(info    OBJECTS:      $(OBJECTS))
+
 
 # Libraries stored here: /usr/lib/x86_64-linux-gnu
 # NPPC, NPP core library which MUST be included when linking any application, functions are listed in nppCore.h,

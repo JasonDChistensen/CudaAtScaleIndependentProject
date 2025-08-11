@@ -105,11 +105,11 @@ int main(int argc, char* argv[])
   }
   else
   {
-    printf("Uh oh! Someting went wrong.  Not able to fine interpolation "
+    printf("Uh oh! Something went wrong.  Not able to find interpolation "
            "filter file for interpolation factor:%d!\n", interpolation_factor);
     return -1;
   }
-  printf("interpolatin filter file name:%s\n", filter_file.c_str());
+  printf("interpolation filter file name:%s\n", filter_file.c_str());
   
   /* Read in the interpolation filter coeff's */
   std::vector<float> h_filter = readFile(filter_file);
@@ -129,13 +129,13 @@ int main(int argc, char* argv[])
   printf("numberOfOutputElements:%zu\n", numberOfOutputElements);
   cuMemory<float> d_Output(numberOfOutputElements);
 
-  // cuMemory<float> d_Input(numberOfOutputElements);
-  // CHECK(cudaMemcpy(d_Input.data(), h_Input.data(), h_Input.size()*sizeof(float), cudaMemcpyHostToDevice));
+  cuMemory<float> d_Input(numberOfOutputElements);
+  CHECK(cudaMemcpy(d_Input.data(), h_Input.data(), h_Input.size()*sizeof(float), cudaMemcpyHostToDevice));
 
-  // std::vector<float> h_Output(h_Input.size()*upsampleFactor);
-  // printf("h_Output.size: %lu\n", h_Output.size());
-  // interpolate::execute(h_Output.data(), d_Output.data(), d_Input.data(), h_Input.size(), upsampleFactor, 
-  //                      d_Filter.data(), h_filter.size(),d_Aux_Buffer.data());
+  std::vector<float> h_Output(h_Input.size()*upsampleFactor);
+  printf("h_Output.size: %lu\n", h_Output.size());
+  interpolate::execute(h_Output.data(), d_Output.data(), d_Input.data(), h_Input.size(), upsampleFactor, 
+                       d_Filter.data(), h_filter.size(), d_Aux_Buffer.data());
 
   // printf("Read the Upsampled results file\n");
   // std::vector<float> h_matlabInterpolatedOutput = readFile("./vectors/matlabInterpolatedOutput2.bin");
