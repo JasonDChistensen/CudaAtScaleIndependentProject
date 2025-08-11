@@ -17,7 +17,7 @@ cudaAtScaleIndependentProject.exe <output file> <input file> <interpolation fact
 ```
 ## Commands to time the executable:
 ```
-tiem cudaAtScaleIndependentProject.exe <output file> <input file> <interpolation factor>
+time cudaAtScaleIndependentProject.exe <output file> <input file> <interpolation factor>
 ```
 
 
