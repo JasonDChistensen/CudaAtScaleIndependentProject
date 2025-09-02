@@ -169,7 +169,7 @@ int main(int argc, char* argv[])
     }
   }
                      
-  
+  cudaDeviceReset(); 
 
   return 0;
 }

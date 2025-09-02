@@ -124,6 +124,8 @@ void execute(float *h_Output,
     const size_t source_index = 0; //((d_Filter_Length-1)/2)*2; // Handle the pre-pending of zeros.  Handle the group delay of the FIR filter
     CHECK(cudaMemcpy(h_Output, d_filtered_output.data() + source_index, numElements*upsampleFactor*sizeof(float), cudaMemcpyDeviceToHost));
 
+    cudaDeviceSynchronize();
+
     printf("nppGetGpuNumSMs: %d\n", nppGetGpuNumSMs());
     printf("nppGetMaxThreadsPerBlock: %d\n", nppGetMaxThreadsPerBlock());
     printf("nppGetMaxThreadsPerSM: %d\n", nppGetMaxThreadsPerSM());

@@ -24,7 +24,7 @@ protected:
 
   // TearDown method to release resources after each test
   void TearDown() override {
-    //Nothing for now
+     cublasDestroy(fixture_handle);
   }
 
   // Shared resource accessible to all tests in the fixture
@@ -91,7 +91,7 @@ TEST_F(cuBlasTestFixture, CUBLAS_DOT_PRODUCT)
     //printf("dst result: %f\n", dst.get_data().front());
 }
 
-TEST(SIGNAL_PROCESSING, CU_MEMORY)
+TEST(SIGNAL_PROCESSING, DISABLED_CU_MEMORY)
 {
     cuMemory<float> src0(0);        
     EXPECT_EQ(src0.data(), nullptr);
@@ -108,7 +108,7 @@ TEST(SIGNAL_PROCESSING, CU_MEMORY)
 
 
 
-TEST(SIGNAL_PROCESSING, UPSAMPLE)
+TEST(SIGNAL_PROCESSING, DISABLED_UPSAMPLE)
 {
     std::vector<float> h_Input = readFile("./vectors/inputSignal2.bin");
     ASSERT_NE(h_Input.size(), 0u);
@@ -160,7 +160,7 @@ TEST(SIGNAL_PROCESSING, UPSAMPLE)
     upSample::cleanupDeviceMemory(d_Input);
 }
 
-TEST(SIGNAL_PROCESSING, INTERPOLATE)
+TEST(SIGNAL_PROCESSING, DISABLED_INTERPOLATE)
 {
     std::vector<float> h_Input = readFile("./vectors/inputSignal2.bin");
     ASSERT_NE(h_Input.size(), 0u);

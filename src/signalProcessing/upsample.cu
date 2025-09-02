@@ -64,7 +64,32 @@ void execute(float *d_Output, float const *d_Input, int numElements, int upsampl
     int threadsPerBlock = 256;
     int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
     printf("CUDA kernel launch with %d blocks of %d threads\n", blocksPerGrid, threadsPerBlock);
+
+    // Create CUDA events
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
+    // Record the start event
+    cudaEventRecord(start, 0); // 0 indicates the default stream
+
     deviceUpsample<<<blocksPerGrid, threadsPerBlock>>>(d_Output, d_Input, numElements, upsampleFactor);
+
+    // Record the stop event
+    cudaEventRecord(stop, 0);
+
+    // Synchronize the stop event to ensure all preceding operations in the stream are complete
+    cudaEventSynchronize(stop);
+
+    // Calculate the elapsed time
+    float milliseconds = 0;
+    cudaEventElapsedTime(&milliseconds, start, stop);
+
+    printf("upSample Kernel execution time: %f ms\n", milliseconds);
+
+    // Destroy the events
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
 }
 
 } //namespace upSample 

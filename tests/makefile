@@ -3,10 +3,10 @@ COMPILER_FLAGS = -std=c++17
 GTEST_DIR = ../extern/googletest/googletest
 GTEST_INCLUDE = $(GTEST_DIR)/include
 GTEST_LIB = $(GTEST_DIR)/libgtest.a
-TARGET = newProjectTests.exe
+TARGET = cudaAtScaleTests.exe
 SOURCES = $(wildcard *.cpp)
 SOURCES = \
-  ../src/fileManagement/readFile.cpp 
+  ../src/fileManagement/readFile.cpp
 SOURCES_CU = $(wildcard ../src/signalProcessing/*.cu)
 OBJECTS = $(SOURCES:.cpp=.o) $(SOURCES_CU:.cu=.o)
 
@@ -15,7 +15,13 @@ TEST_SOURCES = \
   main.cpp \
   fileManagement/tests.cpp \
   signalProcessing/tests.cpp \
-
+  signalProcessing/upsample/factor2_tests.cpp \
+  signalProcessing/upsample/factor3_tests.cpp \
+  signalProcessing/upsample/factor5_tests.cpp \
+  signalProcessing/upsample/factor7_tests.cpp \
+  signalProcessing/interpolate/factor2_tests.cpp \
+  signalProcessing/interpolate/factor3_tests.cpp 
+ 
 $(info    SOURCES:      $(SOURCES))
 $(info    TEST_SOURCES: $(TEST_SOURCES))
 $(info    SOURCES_CU:   $(SOURCES_CU))
