@@ -9,7 +9,7 @@ TEST(FACTOR3, UPSAMPLE)
 {
     std::vector<float> h_Input = readFile("./vectors/inputSignal3.bin");
     ASSERT_NE(h_Input.size(), 0u);
-    printf("h_Input.size: %lu\n", h_Input.size());
+    //printf("h_Input.size: %lu\n", h_Input.size());
 
     const size_t upsampleFactor  = 3;
     cuMemory<float> d_Input(h_Input.size() * upsampleFactor);
@@ -30,12 +30,12 @@ TEST(FACTOR3, UPSAMPLE)
 
     std::vector<float> h_Expected_Output = readFile("./vectors/inputSignalUpsampled3.bin");
     ASSERT_NE(h_Expected_Output.size(), 0u);
-    printf("h_Expected_Output.size: %lu\n", h_Expected_Output.size());
+    //printf("h_Expected_Output.size: %lu\n", h_Expected_Output.size());
 
 
     // Copy the device result vector in device memory to the host result vector
     // in host memory.
-    printf("Copy output data from the CUDA device to the host memory\n");
+    //printf("Copy output data from the CUDA device to the host memory\n");
     std::vector<float> h_Output(h_Input.size()*upsampleFactor);
 
     CHECK(cudaMemcpy(h_Output.data(), d_Output.data(), h_Output.size()*sizeof(float), cudaMemcpyDeviceToHost));

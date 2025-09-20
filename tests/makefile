@@ -20,7 +20,9 @@ TEST_SOURCES = \
   signalProcessing/upsample/factor5_tests.cpp \
   signalProcessing/upsample/factor7_tests.cpp \
   signalProcessing/interpolate/factor2_tests.cpp \
-  signalProcessing/interpolate/factor3_tests.cpp 
+  signalProcessing/interpolate/factor3_tests.cpp \
+  signalProcessing/interpolate/factor5_tests.cpp \
+  signalProcessing/interpolate/factor7_tests.cpp 
  
 $(info    SOURCES:      $(SOURCES))
 $(info    TEST_SOURCES: $(TEST_SOURCES))

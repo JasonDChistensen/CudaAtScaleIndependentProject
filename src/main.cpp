@@ -33,6 +33,12 @@ void print_help_message(void)
   cout << "The input file shoud be an array of floats.  The output will be an array of floats" << endl;
   cout << "The supported interpolation factors are 2, 3, 5, and 7." << endl;
   cout << "Usage: cudaAtScaleIndependentProject.exe <output file> <input file> <interpolation factor>" << endl;
+
+  cout << endl;
+  cout << "nppGetGpuNumSMs:" << nppGetGpuNumSMs() << endl;
+  cout << "nppGetMaxThreadsPerBlock:" << nppGetMaxThreadsPerBlock() << endl;
+  cout << "nppGetMaxThreadsPerSM:" << nppGetMaxThreadsPerSM() << endl;
+  cout << "nppGetGpuName:" << nppGetGpuName() << endl;
 }
 
 bool string_to_int(int32_t& out, char * in)
@@ -126,24 +132,24 @@ int main(int argc, char* argv[])
 
   const size_t upsampleFactor  = interpolation_factor;
   const size_t numberOfOutputElements = h_Input.size()*upsampleFactor + ((d_Filter.size()-1)*2);
-  printf("h_Input.size():%zu\n", h_Input.size());
-  printf("upsampleFactor:%zu\n", upsampleFactor);
-  printf("numberOfOutputElements:%zu\n", numberOfOutputElements);
+  // printf("h_Input.size():%zu\n", h_Input.size());
+  // printf("upsampleFactor:%zu\n", upsampleFactor);
+  // printf("numberOfOutputElements:%zu\n", numberOfOutputElements);
   cuMemory<float> d_Output(numberOfOutputElements);
 
   cuMemory<float> d_Input(numberOfOutputElements);
   CHECK(cudaMemcpy(d_Input.data(), h_Input.data(), h_Input.size()*sizeof(float), cudaMemcpyHostToDevice));
 
   std::vector<float> h_Output(h_Input.size()*upsampleFactor);
-  printf("h_Output.size: %lu\n", h_Output.size());
+  //printf("h_Output.size: %lu\n", h_Output.size());
   interpolate::execute(h_Output.data(), d_Output.data(), d_Input.data(), h_Input.size(), upsampleFactor, 
                        d_Filter.data(), h_filter.size(), d_Aux_Buffer.data());
 
   writeFile(output_file, h_Output);
 
-  printf("Read the Upsampled results file\n");
+  //printf("Read the Upsampled results file\n");
   std::vector<float> h_matlabInterpolatedOutput = readFile("./tests/vectors/matlabInterpolatedOutput2.bin");
-  printf("h_matlabInterpolatedOutput.size: %lu\n", h_matlabInterpolatedOutput.size());
+  //printf("h_matlabInterpolatedOutput.size: %lu\n", h_matlabInterpolatedOutput.size());
 
   std::vector<float> output = readFile(output_file);
 

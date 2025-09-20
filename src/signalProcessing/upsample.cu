@@ -63,7 +63,7 @@ void execute(float *d_Output, float const *d_Input, int numElements, int upsampl
 {
     int threadsPerBlock = 256;
     int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
-    printf("CUDA kernel launch with %d blocks of %d threads\n", blocksPerGrid, threadsPerBlock);
+    //printf("CUDA kernel launch with %d blocks of %d threads\n", blocksPerGrid, threadsPerBlock);
 
     // Create CUDA events
     cudaEvent_t start, stop;
@@ -85,7 +85,7 @@ void execute(float *d_Output, float const *d_Input, int numElements, int upsampl
     float milliseconds = 0;
     cudaEventElapsedTime(&milliseconds, start, stop);
 
-    printf("upSample Kernel execution time: %f ms\n", milliseconds);
+    //printf("upSample Kernel execution time: %f ms\n", milliseconds);
 
     // Destroy the events
     cudaEventDestroy(start);

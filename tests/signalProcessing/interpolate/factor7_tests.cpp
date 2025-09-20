@@ -6,13 +6,13 @@
 #include "upsample.cuh"
 #include "interpolate.cuh"
 
-TEST(FACTOR2, INTERPOLATE)
+TEST(FACTOR7, INTERPOLATE)
 {
-    std::vector<float> h_Input = readFile("./vectors/inputSignal2.bin");
+    std::vector<float> h_Input = readFile("./vectors/inputSignal7.bin");
     ASSERT_NE(h_Input.size(), 0u);
     //printf("h_Input.size: %lu\n", h_Input.size());
 
-    std::vector<float> h_filter = readFile("./vectors/interpFilter2.bin");
+    std::vector<float> h_filter = readFile("./vectors/interpFilter7.bin");
     ASSERT_NE(h_filter.size(), 0u);
     //printf("h_filter.size: %lu\n", h_filter.size());
     // for(size_t i = 0; i < h_filter.size(); i++)
@@ -22,13 +22,13 @@ TEST(FACTOR2, INTERPOLATE)
     cuMemory<float> d_Filter(h_filter);
     cuMemory<float> d_Aux_Buffer(h_filter.size());
 
-    const size_t upsampleFactor  = 2;
+    const size_t upsampleFactor  = 7;
     const size_t numberOfOutputElements = h_Input.size()*upsampleFactor + ((d_Filter.size()-1)*2);
     cuMemory<float> d_Output(numberOfOutputElements);
 
 
     //printf("Read the Upsampled results file\n");
-    std::vector<float> h_matlabInterpolatedOutput = readFile("./vectors/matlabInterpolatedOutput2.bin");
+    std::vector<float> h_matlabInterpolatedOutput = readFile("./vectors/matlabInterpolatedOutput7.bin");
     ASSERT_NE(h_matlabInterpolatedOutput.size(), 0u);
     //printf("h_matlabInterpolatedOutput.size: %lu\n", h_matlabInterpolatedOutput.size());
 

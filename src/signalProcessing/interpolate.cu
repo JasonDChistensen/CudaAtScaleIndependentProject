@@ -23,15 +23,15 @@ std::tuple<float* /*d_Output*/, float* /*d_Input*/, float* /*d_Filter*/, float* 
                                                                                               size_t const upsampleFactor,
                                                                                               size_t const filterLength)
 {
-    printf("interpolate::allocateDeviceMemory, numberOfSamples:  %lu\n", numberOfSamples);
-    printf("interpolate::allocateDeviceMemory, upsampleFactor:   %lu\n", upsampleFactor);
-    printf("interpolate::allocateDeviceMemory, filterLength:     %lu\n", filterLength);
+    // printf("interpolate::allocateDeviceMemory, numberOfSamples:  %lu\n", numberOfSamples);
+    // printf("interpolate::allocateDeviceMemory, upsampleFactor:   %lu\n", upsampleFactor);
+    // printf("interpolate::allocateDeviceMemory, filterLength:     %lu\n", filterLength);
 
     // Allocate the memory for the device Input
     float *d_Input = NULL;
     {
         const size_t numberOfElements = numberOfSamples;
-        printf("interpolate::allocateDeviceMemory, d_Input, numberOfElements: %lu\n", numberOfElements);
+        //printf("interpolate::allocateDeviceMemory, d_Input, numberOfElements: %lu\n", numberOfElements);
         CHECK(cudaMalloc((void **)&d_Input, numberOfElements*sizeof(float)));
     }
 
@@ -39,21 +39,21 @@ std::tuple<float* /*d_Output*/, float* /*d_Input*/, float* /*d_Filter*/, float* 
     float *d_Output = NULL;
     {
         const size_t numberOfElements = numberOfSamples*upsampleFactor + ((filterLength-1)*2);
-        printf("interpolate::allocateDeviceMemory, d_Output, numberOfElements: %lu\n", numberOfElements);
+        //printf("interpolate::allocateDeviceMemory, d_Output, numberOfElements: %lu\n", numberOfElements);
         CHECK(cudaMalloc((void **)&d_Output, numberOfElements*sizeof(float)));
     }
 
     float *d_Filter = NULL;
     {
-        const size_t numberOfElements = filterLength;
-        printf("interpolate::allocateDeviceMemory, d_Filter, numberOfElements: %lu\n", numberOfElements);
+        //const size_t numberOfElements = filterLength;
+        //printf("interpolate::allocateDeviceMemory, d_Filter, numberOfElements: %lu\n", numberOfElements);
         CHECK(cudaMalloc((void **)&d_Filter, filterLength*sizeof(float)));
     }
 
     float *d_Aux_Buffer = NULL;
     {
         const size_t numberOfElements = filterLength;
-        printf("interpolate::allocateDeviceMemory, d_Aux_Buffer, numberOfElements: %lu\n", numberOfElements);
+        //printf("interpolate::allocateDeviceMemory, d_Aux_Buffer, numberOfElements: %lu\n", numberOfElements);
         CHECK(cudaMalloc((void **)&d_Aux_Buffer, numberOfElements*sizeof(float)));
     }
     return {d_Output, d_Input, d_Filter, d_Aux_Buffer};
@@ -76,20 +76,15 @@ void execute(float *h_Output,
              size_t const d_Filter_Length,
              float *d_Aux_Buffer)
 {
-    printf("interpolate::execute, numElements: %d, upsampleFactor: %d\n", numElements, upsampleFactor);
+    //printf("interpolate::execute, numElements: %d, upsampleFactor: %d\n", numElements, upsampleFactor);
 
     size_t destIdx = d_Filter_Length - 1;
-    printf("interpolate::execute, upsample destIdx: %lu\n", destIdx);
+    //printf("interpolate::execute, upsample destIdx: %lu\n", destIdx);
 
     upSample::execute(&d_Output[destIdx], d_Input, numElements, upsampleFactor);
 
     std::vector<float> h_upsample(numElements*upsampleFactor);
     CHECK(cudaMemcpy(h_upsample.data(), d_Output, h_upsample.size()*sizeof(float), cudaMemcpyDeviceToHost));
-
-    // for(size_t i = 0; i < 30; i++)
-    // {
-    //     printf("interpolate::execute, h_upsample[%lu]: %f\n", i, h_upsample[i]);
-    // }
 
     cublasHandle_t handle;
     CHECK_CUBLAS(cublasCreate(&handle));
@@ -98,38 +93,18 @@ void execute(float *h_Output,
     cuMemory<float> d_filtered_output(endSize);
 
     std::vector<float> h_partialMult(d_Filter_Length);
-    printf("interpolate::execute, endSize: %lu\n", endSize);
+    //printf("interpolate::execute, endSize: %lu\n", endSize);
     for(size_t srcIdx = 0; srcIdx < endSize; srcIdx++)
     {
-
-        //printf("interpolate::execute, srcIdx: %lu\n", srcIdx);
-        CHECK_NPP(nppsMul_32f(d_Filter, &d_Output[srcIdx], d_Aux_Buffer, d_Filter_Length));
-
-        //printf("Copy output data from the CUDA device to the host memory\n");
-        CHECK(cudaMemcpy(h_partialMult.data(), d_Aux_Buffer, h_partialMult.size()*sizeof(float), cudaMemcpyDeviceToHost));
-
-        // for(size_t i = 0; i < h_partialMult.size(); i++)
-        // {
-        //   printf("interpolate::execute, h_partialMult[%lu]: %f\n", i, h_partialMult[i]);
-        // }
-        // float sum = std::accumulate(h_partialMult.begin(), h_partialMult.end(), 0.0);
-        // printf("sum: %1.10f\n", sum);
-        // h_Output[srcIdx] = sum;
         cublasStatus_t stat = cublasSdot (handle, d_Filter_Length, d_Filter, 1, &d_Output[srcIdx], 1, d_filtered_output.data()+srcIdx);
     }
     cublasDestroy(handle);
 
-    printf("Copy the filtered output data from the CUDA device to the host memory\n");
-    //err = cudaMemcpy(h_Output, d_filtered_output.data(), d_filtered_output.size()*sizeof(float), cudaMemcpyDeviceToHost);
+    //printf("Copy the filtered output data from the CUDA device to the host memory\n");
     const size_t source_index = 0; //((d_Filter_Length-1)/2)*2; // Handle the pre-pending of zeros.  Handle the group delay of the FIR filter
     CHECK(cudaMemcpy(h_Output, d_filtered_output.data() + source_index, numElements*upsampleFactor*sizeof(float), cudaMemcpyDeviceToHost));
 
     cudaDeviceSynchronize();
-
-    printf("nppGetGpuNumSMs: %d\n", nppGetGpuNumSMs());
-    printf("nppGetMaxThreadsPerBlock: %d\n", nppGetMaxThreadsPerBlock());
-    printf("nppGetMaxThreadsPerSM: %d\n", nppGetMaxThreadsPerSM());
-    printf("nppGetGpuName: %s\n", nppGetGpuName());
 }
 
 } //namespace interpolate

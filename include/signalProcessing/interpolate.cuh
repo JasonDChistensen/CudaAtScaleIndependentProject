@@ -1,3 +1,6 @@
+#ifndef INTERPOLATE_H
+#define INTERPOLATE_H
+
 // For the CUDA runtime routines (prefixed with "cuda_")
 #include <cuda_runtime.h>
 #include <stddef.h>
@@ -14,3 +17,4 @@ void execute(float *h_Output, float *d_Output, const float *d_Input, int numElem
     const float *d_Filter, size_t const d_Filter_Length, float *d_Aux_Buffer);
 
 }
+#endif // INTERPOLATE_H

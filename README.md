@@ -2,7 +2,32 @@
 
 For this project I decided to implement interpolation using CUDA.  Why interpolation?  Interpolation is useful in its own right.  At the same time once interpolation has been implemented it is not to difficult to do decimation, correlation, and filtering.
 
-I believe the intention of the project was to use the NPP libray.  My plan was to use nppsMul_32f to multiply the input by the interpolaton filter, then use nppsIntegral_32s_Ctx to accumulate the resullts.  The problem was that I needed an accumulation function that worked with float's and nppsIntegral_32s_Ctx only accepts 32-bit signed integers.  I could have made my own kernel to accumulate float's, but that not be in the spirit of using CUDA libraries.  As an alternative I used cublasSdot for the accumalation.
+I believe the intention of the project was to use the NPP library.  My plan was to use nppsMul_32f to multiply the input by the interpolation filter, then use nppsIntegral_32s_Ctx to accumulate the results.  The problem was that I needed an accumulation function that worked with float's and nppsIntegral_32s_Ctx only accepts 32-bit signed integers.  I could have made my own kernel to accumulate float's, but that not be in the spirit of using CUDA libraries.  As an alternative I used cublasSdot for the accumulation.
+
+### Methodology
+
+The methodology of the project:
+- Implement the interpolation algorithm in Matlab
+- Create test vectors using Matlab
+- Create functions to perform interpolation in CUDA
+- Verify the CUDA functions in a Unit Test environment
+- Write the code for the interpolation application that makes use of the CUDA functions
+
+### Algorithm
+
+The interpolation algorithm chosen to implement was the most naive one to implement.  The naive algorithm is inserting zeros between samples and then applying a low pass filter.  Before starting the project I already knew of algorithms that are better computationally.  So why start with a naive approach?  The first reason is because it is a good engineering practice to get something working first and optimize later.  The second reason is that once you start optimizing you will have the naive algorithm to bench mark against.  
+
+### Results
+TODO
+
+### Next Steps
+For the next steps I would explore other interpolation algorithms.  Two possible candidates are the fast correlation method and poly phase filters.
+
+
+
+
+
+
 
 ## Commands to make the project:
 
@@ -30,7 +55,7 @@ make
 
 ## Commands to make run the unit tests:
 ```
-newProjectTests.exe
+cudaAtScaleTests.exe
 ```
 
 ## Reference:
