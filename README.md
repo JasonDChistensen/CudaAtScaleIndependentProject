@@ -15,7 +15,24 @@ The methodology of the project:
 
 ### Algorithm
 
-The interpolation algorithm chosen to implement was the most naive one to implement.  The naive algorithm is inserting zeros between samples and then applying a low pass filter.  Before starting the project I already knew of algorithms that are better computationally.  So why start with a naive approach?  The first reason is because it is a good engineering practice to get something working first and optimize later.  The second reason is that once you start optimizing you will have the naive algorithm to bench mark against.  
+The interpolation algorithm chosen to implement was the most naive one to implement.  The naive algorithm is upsampling (i.e. inserting zeros between samples) and then applying a low pass filter.  Before starting the project I already knew of algorithms that are better computationally.  So why start with a naive approach?  The first reason is because it is a good engineering practice to get something working first and optimize later.  The second reason is that once you start optimizing you will have the naive algorithm to bench mark against.  
+
+#### Upsample
+A kernel was made to do the upsample by inserting N-1 zeros between the input samples.  Where N is the upsample factor.  See upsample.cu for implementation details.
+
+#### Low Pass Filter
+I used Matlab to create the low pass filter.  Below are graphs of the low pass filters.
+
+![](images/InterpolationFilter2.jpg "Interpolation filter:  Upfactor: 2")
+
+![](images/InterpolationFilter3.jpg "Interpolation filter:  Upfactor: 3")
+
+![](images/InterpolationFilter5.jpg "Interpolation filter:  Upfactor: 5")
+
+![](images/InterpolationFilter7.jpg "Interpolation filter:  Upfactor: 7")
+
+#### Interpolation
+Interpolation make use of the umsample kernel and cublasSdot().
 
 ### Results
 TODO
