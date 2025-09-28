@@ -35,28 +35,30 @@ I used Matlab to create the low pass filter.  Below are graphs of the low pass f
 Interpolation make use of the umsample kernel and cublasSdot().
 
 ### Results
-TODO
+I did make a test input signal with 50e6 sample to be interpolate by 7.  In Matlab it took about 23 seconds to finish.  When I tried the same input signal in this application it never finished!  Lesson learned is that nothing beats a superior algorithm.  
+
+My understanding is that Matlab uses the FFT Convolution algorithm.  See https://www.analog.com/media/en/technical-documentation/dsp-book/dsp_book_ch18.pdf for description of FFT Convolution.
 
 ### Next Steps
-For the next steps I would explore other interpolation algorithms.  Two possible candidates are the fast correlation method and poly phase filters.
-
-
-
-
-
-
+For the next steps I would explore other interpolation algorithms.  Two possible candidates are the FFT Convolution method and poly phase filters.
 
 ## Commands to make the project:
 
 ```
+git clone git@github.com:JasonDChistensen/CudaAtScaleIndependentProject.git
+cd CudaAtScaleIndependentProject
 git submodule update --init --recursive
-cd src
 make
 ```
 ## Commands to run the executable:
 ```
 cudaAtScaleIndependentProject.exe <output file> <input file> <interpolation factor>
 ```
+### Example:
+```
+./cudaAtScaleIndependentProject.exe interpolatedSignal2.bin tests/vectors/inputSignal2.bin 2
+```
+
 ## Commands to time the executable:
 ```
 time cudaAtScaleIndependentProject.exe <output file> <input file> <interpolation factor>
@@ -66,13 +68,13 @@ time cudaAtScaleIndependentProject.exe <output file> <input file> <interpolation
 ## Commands to make the unit tests:
 
 ```
-cd ../tests
+cd tests
 make
 ```
 
-## Commands to make run the unit tests:
+## Commands to run the unit tests:
 ```
-cudaAtScaleTests.exe
+./cudaAtScaleTests.exe
 ```
 
 ## Reference:
@@ -86,6 +88,8 @@ https://docs.nvidia.com/cuda/npp/index.html
 https://docs.nvidia.com/cuda/npp/signal_filtering_functions.html
 
 https://docs.nvidia.com/cuda/cublas/
+
+https://www.analog.com/media/en/technical-documentation/dsp-book/dsp_book_ch18.pdf
 
 Setting up Visual Studio for debugging: https://docs.nvidia.com/nsight-visual-studio-code-edition/cuda-debugger/index.html
 

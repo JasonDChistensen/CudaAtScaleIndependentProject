@@ -118,62 +118,39 @@ int main(int argc, char* argv[])
     return -1;
   }
   printf("interpolation filter file name:%s\n", filter_file.c_str());
+
+  {
   
-  /* Read in the interpolation filter coeff's */
-  std::vector<float> h_filter = readFile(filter_file);
+    /* Read in the interpolation filter coeff's */
+    std::vector<float> h_filter = readFile(filter_file);
 
-  /* Read in the file to be interpolated*/
-  // example: ./cudaAtScaleIndependentProject.exe  ./output2.bin ./tests/vectors/inputSignal2.bin 2
-  std::vector<float> h_Input = readFile(input_file);
+    /* Read in the file to be interpolated*/
+    // example: ./cudaAtScaleIndependentProject.exe  ./output2.bin ./tests/vectors/inputSignal2.bin 2
+    std::vector<float> h_Input = readFile(input_file);
 
-  // Allocate memory
-  cuMemory<float> d_Filter(h_filter);
-  cuMemory<float> d_Aux_Buffer(h_filter.size());
+    // Allocate memory
+    cuMemory<float> d_Filter(h_filter);
+    cuMemory<float> d_Aux_Buffer(h_filter.size());
 
-  const size_t upsampleFactor  = interpolation_factor;
-  const size_t numberOfOutputElements = h_Input.size()*upsampleFactor + ((d_Filter.size()-1)*2);
-  // printf("h_Input.size():%zu\n", h_Input.size());
-  // printf("upsampleFactor:%zu\n", upsampleFactor);
-  // printf("numberOfOutputElements:%zu\n", numberOfOutputElements);
-  cuMemory<float> d_Output(numberOfOutputElements);
+    const size_t upsampleFactor  = interpolation_factor;
+    const size_t numberOfOutputElements = h_Input.size()*upsampleFactor + ((d_Filter.size()-1)*2);
+    // printf("h_Input.size():%zu\n", h_Input.size());
+    // printf("upsampleFactor:%zu\n", upsampleFactor);
+    // printf("numberOfOutputElements:%zu\n", numberOfOutputElements);
+    cuMemory<float> d_Output(numberOfOutputElements);
 
-  cuMemory<float> d_Input(numberOfOutputElements);
-  CHECK(cudaMemcpy(d_Input.data(), h_Input.data(), h_Input.size()*sizeof(float), cudaMemcpyHostToDevice));
+    cuMemory<float> d_Input(numberOfOutputElements);
+    CHECK(cudaMemcpy(d_Input.data(), h_Input.data(), h_Input.size()*sizeof(float), cudaMemcpyHostToDevice));
 
-  std::vector<float> h_Output(h_Input.size()*upsampleFactor);
-  //printf("h_Output.size: %lu\n", h_Output.size());
-  interpolate::execute(h_Output.data(), d_Output.data(), d_Input.data(), h_Input.size(), upsampleFactor, 
-                       d_Filter.data(), h_filter.size(), d_Aux_Buffer.data());
+    std::vector<float> h_Output(h_Input.size()*upsampleFactor);
+    //printf("h_Output.size: %lu\n", h_Output.size());
+    interpolate::execute(h_Output.data(), d_Output.data(), d_Input.data(), h_Input.size(), upsampleFactor, 
+                        d_Filter.data(), h_filter.size(), d_Aux_Buffer.data());
 
-  writeFile(output_file, h_Output);
+    writeFile(output_file, h_Output);
 
-  //printf("Read the Upsampled results file\n");
-  std::vector<float> h_matlabInterpolatedOutput = readFile("./tests/vectors/matlabInterpolatedOutput2.bin");
-  //printf("h_matlabInterpolatedOutput.size: %lu\n", h_matlabInterpolatedOutput.size());
-
-  std::vector<float> output = readFile(output_file);
-
-  if(h_matlabInterpolatedOutput.size() != output.size())
-  {
-    printf("[%s:%d]Error", __FILE__, __LINE__);
-    exit(1);
-  }
-
-  printf("[%s:%d]output.size:%zu\n", __FILE__, __LINE__, output.size());
-
-  for(size_t i = 0; i < h_matlabInterpolatedOutput.size(); i++)
-  {
-    float error = std::fabs(h_matlabInterpolatedOutput[i] - output[i]);
-    if(error > 1e-5)
-    {
-      printf("[%s:%d]Error!, i:%zu,h_matlabInterpolatedOutput:%.12f, output:%.12f\n", __FILE__, __LINE__,
-        i,
-        h_matlabInterpolatedOutput[i],
-        output[i]
-      );
-      exit(1);
-    }
-  }
+  }// cuMemory allocation will go out of scope and Cuda memory will be freed.  
+   // If this scoping is not done, then cudaDeviceReset will cause an error becuase memory will be freed after calling cudaDeviceReset.
                      
   cudaDeviceReset(); 
 
